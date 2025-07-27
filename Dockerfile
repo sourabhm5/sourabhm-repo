@@ -1,24 +1,29 @@
-# Base image with Conda
+# Use Miniconda3 base image
 FROM continuumio/miniconda3
 
-# Set working directory
+# Set working directory in container
 WORKDIR /app
 
-# Copy conda environment file
+# Copy local files to container
+COPY . /app
+
+# Copy environment.yml and create conda environment
 COPY environment.yml .
 
-# Create environment from YAML
+# Create conda env
 RUN conda env create -f environment.yml
 
-# Use 'llms' as the default shell environment
-SHELL ["conda", "run", "-n", "llms", "/bin/bash", "-c"]
+# Activate environment
+SHELL ["conda", "run", "-n", "sourabhm-env", "/bin/bash", "-c"]
 
-# (Optional) Install JupyterLab and extras if not already in YAML
-RUN conda install -n llms -y jupyterlab && \
-    pip install jupyterlab-vim
+# Optional: install Jupyter or any CLI requirements
+RUN pip install --upgrade pip
 
-# Expose Jupyter port
-EXPOSE 8888
+# Set environment path
+ENV PATH /opt/conda/envs/sourabhm-env/bin:$PATH
 
-# Default command: run JupyterLab on container start
-CMD ["conda", "run", "--no-capture-output", "-n", "llms", "jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--allow-root", "--no-browser"]
+# Expose Gradio default port
+EXPOSE 7860
+
+# Run the main script (change this to your actual entrypoint)
+CMD ["python", "your_script.py"]
