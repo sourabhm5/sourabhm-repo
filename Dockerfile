@@ -1,25 +1,24 @@
-FROM continuumiominiconda3
+# Base image with Conda
+FROM continuumio/miniconda3
 
 # Set working directory
-WORKDIR workspace
+WORKDIR /app
 
-# Copy environment definition
+# Copy conda environment file
 COPY environment.yml .
 
-# Create the 'llms' environment
-RUN conda env create -f environment.yml && conda clean -a -y
+# Create environment from YAML
+RUN conda env create -f environment.yml
 
 # Use 'llms' as the default shell environment
-SHELL [conda, run, -n, llms, binbash, -c]
+SHELL ["conda", "run", "-n", "llms", "/bin/bash", "-c"]
 
-# Install optional extras (if not in your yml)
-RUN conda run -n llms pip install --no-cache-dir gradio jupyterlab
+# (Optional) Install JupyterLab and extras if not already in YAML
+RUN conda install -n llms -y jupyterlab && \
+    pip install jupyterlab-vim
 
-# Install VSCode Server (optional for browser-based code editing)
-RUN curl -fsSL httpscode-server.devinstall.sh  sh
+# Expose Jupyter port
+EXPOSE 8888
 
-# Expose useful ports
-EXPOSE 8888 7860 8080
-
-# Start JupyterLab by default
-CMD [conda, run, -n, llms, jupyter, lab, --ip=0.0.0.0, --port=8888, --no-browser, --allow-root]
+# Default command: run JupyterLab on container start
+CMD ["conda", "run", "--no-capture-output", "-n", "llms", "jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--allow-root", "--no-browser"]
