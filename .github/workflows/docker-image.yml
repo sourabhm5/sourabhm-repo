@@ -1,22 +1,33 @@
-name: Build and Push Docker Image to Docker Hub
+name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main  # Change to your default branch if different
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+      - name: Set up QEMU (for multi‑arch, optional)
+        uses: docker/setup-qemu-action@v3
+        if: needs.build.outputs.multiarch == 'true'
 
-    - name: Build Docker image
-      run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/llms-env .
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Push Docker image
-      run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/llms-env
+      - name: Login to DockerHub
+        run: |
+          echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t sourabhmittal234/llms-env:latest .
+
+      - name: Push Docker image
+        run: docker push sourabhmittal234/llms-env:latest
+
+      # Optionally you can publish to Docker Hub's build feed / latest tags here
